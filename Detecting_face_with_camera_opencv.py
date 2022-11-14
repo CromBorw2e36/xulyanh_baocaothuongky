@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import os
+from imutils.video import VideoStream
 
 # hàm phát hiện đối tượng để học máy
 # khuôn mặt
@@ -18,13 +20,13 @@ nose_cascade = cv2.CascadeClassifier('./lib/haarcascade_mcs_nose.xml')
 if nose_cascade.empty():
   raise IOError('Unable to load the nose cascade classifier xml file')
 
-cap = cv2.VideoCapture(0)
+cap = VideoStream(src=0, framerate=30).start()
 
 # set size windows
 ds_factor = 1.5
 
 while True:
-    ret, frame = cap.read()
+    frame = cv2.flip(cap.read(), 1)
     frame = cv2.resize(frame, None, fx=ds_factor, fy=ds_factor, interpolation=cv2.INTER_AREA)
 
     face = face_cascade.detectMultiScale(frame, scaleFactor=1.2, minNeighbors=4)
@@ -50,33 +52,33 @@ while True:
         eyes = eye_cascade.detectMultiScale(roi_gray, 1.3, 5)
         smile = smile_cascade.detectMultiScale(roi_gray, 5, 5)
         nose = nose_cascade.detectMultiScale(roi_gray, 1.3, 5)
-        left_ear = left_ear_cascade.detectMultiScale(frame, 5, 5)
-        right_ear = right_ear_cascade.detectMultiScale(frame, 5, 5)
 
-        # tai trái
-        for (lex, ley, lew, leh) in left_ear:
-            cv2.rectangle(gray, (lex, ley), (lex + lew, ley + leh), (0, 0, 255), 3)
-            break
-        # tai phải
-        for (rex, rey, rew, reh) in right_ear:
-            cv2.rectangle(gray, (rex, rey), (rex + rew, rey + reh), (0, 0, 255), 3)
-            break
+
+
+
         # mắt
         for (ex, ey, ew, eh) in eyes:
             cv2.rectangle(roi_color, (ex, ey), (ex + ew, ey + eh), (254, 190, 140), 5)
         # miệng
         for (sx, sy, sw, sh) in smile:
             cv2.rectangle(roi_color, (sx, sy), (sx + sw, sy + sh), (255, 88, 88), 5)
-            break
         # mũi
         for (sx, sy, sw, sh) in nose:
             cv2.rectangle(roi_color, (sx, sy), (sx + sw, sy + sh), (182, 226, 161), 5)
-            break
+
+    left_ear = left_ear_cascade.detectMultiScale(gray, 5, 5)
+    right_ear = right_ear_cascade.detectMultiScale(gray, 5, 5)
+    # tai trái
+    for (lex, ley, lew, leh) in left_ear:
+        cv2.rectangle(frame, (lex, ley), (lex + lew, ley + leh), (0, 0, 255), 3)
+        # tai phải
+    for (rex, rey, rew, reh) in right_ear:
+        cv2.rectangle(frame, (rex, rey), (rex + rew, rey + reh), (0, 0, 255), 3)
 
     cv2.imshow('Face Detector', frame)
 
-    c = cv2.waitKey(1)
-    if c == 27:
+    key = cv2.waitKey(1) & 0xFF
+    if key == ord("q"):
         break
 
 cap.release()
